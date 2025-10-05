@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic-Tac-Toe Web</title>
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #1e0a3c, #3b0257);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    color: #e0e7ff;
+}
+
+h1{
+    margin-top: 20px;
+    font-size: 3rem;
+    background: linear-gradient(90deg,#f472b6,#7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+}
+
+#settings {
+    margin: 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255,255,255,0.05);
+    padding: 15px 25px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+input, select, button {
+    padding: 10px 15px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    outline: none;
+    transition: 0.3s;
+}
+
+input, select {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+input::placeholder {
+    color: #ccc;
+}
+
+button {
+    background: #7c3aed;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(124,58,237,0.4);
+}
+
+button:hover {
+    background: #c084fc;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(124,58,237,0.6);
+}
+
+#turn {
+    margin: 15px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #38bdf8;
+    text-shadow: 0 0 10px #38bdf8;
+}
+
+#board {
+    display: grid;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.cell {
+    background: linear-gradient(145deg, #7c3aed, #c084fc);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 15px;
+    transition: 0.3s;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    user-select: none;
+}
+
+.cell:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(124,58,237,0.5);
+}
+
+.winner {
+    background: #facc15 !important;
+    color: #1e0a3c !important;
+    box-shadow: 0 0 20px #facc15;
+    transform: scale(1.2);
+    transition: all 0.5s;
+}
+
+/* Popup styling */
+#popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: linear-gradient(135deg, #facc15, #fcd34d);
+    color: #1e0a3c;
+    padding: 40px 60px;
+    border-radius: 25px;
+    font-size: 2rem;
+    font-weight: bold;
+    box-shadow: 0 0 30px #facc15;
+    z-index: 100;
+    text-align: center;
+    transition: transform 0.4s ease-in-out;
+}
+
+#popup.show {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+#popup button {
+    margin-top: 20px;
+    padding: 10px 25px;
+    font-size: 1.2rem;
+    border-radius: 15px;
+    background: #7c3aed;
+    color: #fff;
+    box-shadow: 0 5px 15px rgba(124,58,237,0.4);
+}
+
+#popup button:hover {
+    background: #c084fc;
+    transform: translateY(-2px);
+}
+</style>
+</head>
+<body>
+
+<h1>Tic-Tac-Toe </h1>
+<div id="settings">
+    <input type="text" id="playerX" placeholder="Player X Name" value="Player X">
+    <input type="text" id="playerO" placeholder="Player O Name" value="Player O">
+    <select id="mode">
+        <option value="single">Single Player</option>
+        <option value="multi">Multiplayer</option>
+    </select>
+    <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+    </select>
+    <select id="boardSize">
+        <option value="3">3 x 3</option>
+        <option value="4">4 x 4</option>
+        <option value="5">5 x 5</option>
+    </select>
+    <button id="start">Start Game</button>
+</div>
+
+<div id="turn"></div>
+<div id="board"></div>
+
+<div id="popup">
+    <div id="popupMessage"></div>
+    <button onclick="closePopup()">OK</button>
+</div>
+<footer>
+    by idcare19
+</footer>
+<script>
+let turn = 'X';
+let board = [];
+let playerNames = { X: 'Player X', O: 'Player O' };
+let boardSize = 3;
+let mode = 'single';
+let difficulty = 'easy';
+
+const boardEl = document.getElementById('board');
+const turnEl = document.getElementById('turn');
+const popup = document.getElementById('popup');
+const popupMessage = document.getElementById('popupMessage');
+
+document.getElementById('start').addEventListener('click', () => {
+    playerNames.X = document.getElementById('playerX').value || 'Player X';
+    playerNames.O = document.getElementById('playerO').value || 'Player O';
+    mode = document.getElementById('mode').value;
+    difficulty = document.getElementById('difficulty').value;
+    boardSize = parseInt(document.getElementById('boardSize').value);
+    if(mode==='single') playerNames.O = 'Computer';
+    startGame();
+});
+
+function startGame() {
+    turn = 'X';
+    board = Array(boardSize*boardSize).fill('');
+    boardEl.innerHTML = '';
+    boardEl.style.gridTemplateColumns = `repeat(${boardSize}, 80px)`;
+    turnEl.textContent = `Turn: ${playerNames[turn]}`;
+
+    for(let i=0;i<board.length;i++){
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.style.width = '80px';
+        cell.style.height = '80px';
+        cell.addEventListener('click', () => cellClick(i));
+        boardEl.appendChild(cell);
+    }
+}
+
+function cellClick(i){
+    if(board[i] !== '' || (mode==='single' && turn==='O')) return;
+    makeMove(i);
+    if(mode==='single' && turn==='O' && !checkWinner()[1]){
+        setTimeout(computerMove, 400);
+    }
+}
+
+function makeMove(i){
+    board[i] = turn;
+    boardEl.children[i].textContent = turn;
+    const [winnerCombo, winner] = checkWinner();
+    if(winner){
+        if(winner==='Draw') showPopup("It's a Draw!");
+        else {
+            if(winnerCombo) winnerCombo.forEach(idx => boardEl.children[idx].classList.add('winner'));
+            showPopup(`${playerNames[winner]} Wins! 🎉`);
+        }
+    } else {
+        turn = turn==='X' ? 'O' : 'X';
+        turnEl.textContent = `Turn: ${playerNames[turn]}`;
+    }
+}
+
+// Computer AI
+function computerMove(){
+    let move;
+    if(difficulty==='easy'){
+        move = randomMove();
+    } else if(difficulty==='medium'){
+        move = findWinningMove('O') || findWinningMove('X') || randomMove();
+    } else { // hard
+        move = minimaxMove();
+    }
+    makeMove(move);
+}
+
+function randomMove(){
+    let empty = board.map((v,i)=>v===''?i:null).filter(v=>v!==null);
+    return empty[Math.floor(Math.random()*empty.length)];
+}
+
+function findWinningMove(player){
+    for(let i=0;i<board.length;i++){
+        if(board[i]===''){
+            board[i]=player;
+            if(checkWinner()[1]===player){
+                board[i]='';
+                return i;
+            }
+            board[i]='';
+        }
+    }
+    return null;
+}
+
+function minimaxMove(){
+    let bestScore=-Infinity, move;
+    for(let i=0;i<board.length;i++){
+        if(board[i]===''){
+            board[i]='O';
+            let score=minimax(false,0);
+            board[i]='';
+            if(score>bestScore){ bestScore=score; move=i; }
+        }
+    }
+    return move;
+}
+
+function minimax(isMax, depth){
+    let winner=checkWinner()[1];
+    if(winner==='O') return 10-depth;
+    if(winner==='X') return depth-10;
+    if(winner==='Draw') return 0;
+    if(isMax){
+        let best=-Infinity;
+        for(let i=0;i<board.length;i++){
+            if(board[i]===''){
+                board[i]='O';
+                best=Math.max(best,minimax(false,depth+1));
+                board[i]='';
+            }
+        }
+        return best;
+    } else {
+        let best=Infinity;
+        for(let i=0;i<board.length;i++){
+            if(board[i]===''){
+                board[i]='X';
+                best=Math.min(best,minimax(true,depth+1));
+                board[i]='';
+            }
+        }
+        return best;
+    }
+}
+
+function showPopup(message){
+    popupMessage.textContent=message;
+    popup.classList.add('show');
+}
+
+function closePopup(){
+    popup.classList.remove('show');
+    startGame();
+}
+
+function checkWinner(){
+    const wins=[];
+    for(let r=0;r<boardSize;r++) wins.push(Array.from({length:boardSize},(_,i)=>r*boardSize+i));
+    for(let c=0;c<boardSize;c++) wins.push(Array.from({length:boardSize},(_,i)=>i*boardSize+c));
+    wins.push(Array.from({length:boardSize},(_,i)=>i*(boardSize+1)));
+    wins.push(Array.from({length:boardSize},(_,i)=>(i+1)*(boardSize-1)));
+    for(const w of wins){
+        if(board[w[0]] && w.every(idx=>board[idx]===board[w[0]])) return [w, board[w[0]]];
+    }
+    if(board.every(c=>c!=='') ) return [null,'Draw'];
+    return [null,null];
+}
+</script>
+
+</body>
+</html>
